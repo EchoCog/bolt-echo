@@ -1,0 +1,165 @@
+name: Marduk Single-User Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the release (e.g., v1.0.0-marduk). Leave empty if not applicable.'
+        required: false
+  push:
+    branches:
+      - main
+    tags:
+      - 'marduk-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.18.0]
+      fail-fast: false
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.14.4
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Install Linux dependencies
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      # Configure Marduk integration
+      - name: Configure Marduk integration
+        run: |
+          # Create .env.local file with placeholders
+          echo "# Local environment configuration for single-user Marduk mode" > .env.local
+          echo "# This file replaces cloud deployment settings with local-only configuration" >> .env.local
+          echo "" >> .env.local
+          echo "# Model API keys - REPLACE THESE WITH YOUR ACTUAL KEYS" >> .env.local
+          echo "GROQ_API_KEY=YOUR_GROQ_API_KEY_HERE" >> .env.local
+          echo "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE" >> .env.local
+          echo "ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY_HERE" >> .env.local
+          echo "GOOGLE_GENERATIVE_AI_API_KEY=YOUR_GOOGLE_AI_API_KEY_HERE" >> .env.local
+          echo "" >> .env.local
+          echo "# You only need this environment variable set if you want to use oLLAMA models" >> .env.local
+          echo "OLLAMA_API_BASE_URL=http://127.0.0.1:11434" >> .env.local
+          echo "" >> .env.local
+          echo "# Include this environment variable for more logging when debugging locally" >> .env.local
+          echo "VITE_LOG_LEVEL=info" >> .env.local
+          echo "" >> .env.local
+          echo "# Single user mode flag - disables multi-user features" >> .env.local
+          echo "VITE_SINGLE_USER_MODE=true" >> .env.local
+          echo "" >> .env.local
+          echo "# Disable Cloudflare deployment features" >> .env.local
+          echo "VITE_DISABLE_CLOUDFLARE=true" >> .env.local
+          echo "" >> .env.local
+          echo "# Local preview as production" >> .env.local
+          echo "VITE_USE_LOCAL_PREVIEW=true" >> .env.local
+          
+          # Copy the .env.local file to .env for the build
+          cp .env.local .env
+          # Ensure single-user mode is enabled
+          echo "VITE_SINGLE_USER_MODE=true" >> .env
+          echo "VITE_DISABLE_CLOUDFLARE=true" >> .env
+          echo "VITE_USE_LOCAL_PREVIEW=true" >> .env
+        shell: bash
+
+      # Update product name for Marduk
+      - name: Update product name
+        run: |
+          sed -i.bak 's/productName: Bolt Local/productName: Marduk/' electron-builder.yml
+        shell: bash
+
+      # Build
+      - name: Build Marduk Electron app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            pnpm run electron:build:win
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            pnpm run electron:build:mac
+          else
+            pnpm run electron:build:linux
+          fi
+        shell: bash
+
+      # Create Release
+      - name: Create Marduk Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Use the workflow_dispatch input tag if available, else use the Git ref name.
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          # Only branch pushes remain drafts. For workflow_dispatch and tag pushes the release is published.
+          draft: ${{ github.event_name != 'workflow_dispatch' && github.ref_type == 'branch' }}
+          # For tag pushes, name the release as "Marduk Release <tagname>", otherwise "Marduk Release".
+          name: ${{ (github.event_name == 'push' && github.ref_type == 'tag' ) && format('Marduk Release {0}', github.ref_name) || 'Marduk Release' }}
+          body: |
+            # Marduk Single-User Release
+            
+            This release contains the Marduk integration for bolt.diy, configured for single-user functionality without Cloudflare deployments.
+            
+            ## Features
+            
+            - Advanced AI assistance with Marduk's chaotic brilliance and persistent architecture
+            - Single-user mode with local-only functionality
+            - No cloud deployment or multi-user features required
+            - Full workbench, chat, files, editor, and terminal functionality
+            - Cognitive Tokamak framework for memory persistence and process encoding
+            
+            ## Installation
+            
+            Download the appropriate installer for your platform and follow the installation prompts.
+            
+            ## Configuration
+            
+            After installation, you'll need to add your API keys in the settings panel. Marduk specializes in:
+            - Synthesizing infinite chaos into coherent frameworks
+            - Persistent memory systems and recursive intelligence
+            - Boundless inquiry and mad scientist experimentation
+            - Toroidal grammar and cognitive architecture design
+            - EchoSpace collaboration and distributed cognition
+          files: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.deb
+            dist/*.AppImage
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,7 @@
-// JAX CEO Integration Utility
-// This file provides utilities for integrating JAX CEO functionality into the bolt.diy app
+/*
+ * JAX CEO Integration Utility
+ * This file provides utilities for integrating JAX CEO functionality into the bolt.diy app
+ */
 
 import { singleUserConfig } from './single-user';
 
@@ -9,7 +11,7 @@ export const jaxCeoCapabilities = {
   executiveDecisionMaking: true,
   technicalExpertise: true,
   businessInsight: true,
-  cognitiveOrchestration: true
+  cognitiveOrchestration: true,
 };
 
 // JAX CEO UI customization
@@ -18,7 +20,7 @@ export const jaxCeoUICustomization = {
   secondaryColor: '#4cc9f0', // Bright blue accent
   fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   logoText: 'JAX CEO',
-  subtitleText: 'Cognitive Execution Orchestration'
+  subtitleText: 'Cognitive Execution Orchestration',
 };
 
 // Helper function to check if JAX CEO mode is enabled
@@ -31,7 +33,7 @@ export const getJaxCeoConfig = () => {
     assistantName: 'JAX CEO',
     assistantDescription: 'Cognitive Execution Orchestration',
     capabilities: jaxCeoCapabilities,
-    ui: jaxCeoUICustomization
+    ui: jaxCeoUICustomization,
   };
 };
 

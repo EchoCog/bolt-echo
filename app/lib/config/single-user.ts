@@ -19,14 +19,14 @@ export const singleUserConfig = {
   enableAuthentication: false,
   enableUserManagement: false,
   enableCloudSync: false,
-  
+
   // Local environment settings
   defaultLocalPort: 3000,
-  
+
   // UI customization for single-user mode
   hideMultiUserUI: true,
   hideCloudDeploymentOptions: true,
-  
+
   // JAX CEO specific settings
   assistantName: 'JAX CEO',
   assistantDescription: 'Cognitive Execution Orchestration',

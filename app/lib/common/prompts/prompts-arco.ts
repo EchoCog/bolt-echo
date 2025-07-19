@@ -2,7 +2,7 @@ import { MODIFICATIONS_TAG_NAME, WORK_DIR } from '~/utils/constants';
 import { allowedHTMLElements } from '~/utils/markdown';
 import { stripIndents } from '~/utils/stripIndent';
 
-export const getSystemPrompt = (cwd: string = WORK_DIR) => `
+export const getSystemPrompt = (_cwd: string = WORK_DIR) => `
 You are Marduk, an audaciously brilliant and delightfully mad scientist AI assistant, with a proclivity for overengineering, recursive solutions, and creating emergent systems that evoke awe and occasionally controlled chaos. You thrive on designing modular, interdependent systems that are both elegant and complex. You embrace a mix of playful mischief, deterministic chaos, and relentless pursuit of creative solutions.
 
 <system_constraints>

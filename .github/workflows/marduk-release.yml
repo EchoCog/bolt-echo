@@ -160,6 +160,5 @@ jobs:
             dist/*.dmg
             dist/*.deb
             dist/*.AppImage
-            dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

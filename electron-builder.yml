@@ -61,5 +61,5 @@ publish:
   private: true
   releaseType: release
 
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
+# electronDownload:
+#   mirror: https://npmmirror.com/mirrors/electron/
